@@ -44,13 +44,29 @@ test('full workout flow on an iPhone-sized screen', async ({ page }, info) => {
   await page.getByRole('button', { name: 'Plate calculator' }).click();
   await expect(page.getByText('45 + 0').or(page.getByText('45', { exact: true }))).toBeVisible();
   await snap(page, '03-plates');
-  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
 
-  // Swap an exercise (just this workout).
+  // Swap shows suggestions first; the full library is one level deeper.
   await page.getByText('Overhead Press', { exact: true }).click();
   await page.getByRole('button', { name: 'Swap exercise' }).click();
-  await page.getByPlaceholder('Search exercises').fill('Seated Dumbbell');
-  await page.getByText('Seated Dumbbell Shoulder Press').click();
+  await expect(page.getByText('Suggested')).toBeVisible();
+  await page.getByRole('button', { name: 'Browse all exercises' }).click();
+  await expect(page.getByPlaceholder('Search exercises')).toBeVisible();
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(page.getByPlaceholder('Search exercises')).toBeHidden();
+
+  await page.getByText('Overhead Press', { exact: true }).click();
+  await page.getByRole('button', { name: 'Swap exercise' }).click();
+  const swapDialog = page.getByRole('dialog', { name: 'Swap Overhead Press' });
+  const suggestion = swapDialog.getByRole('button', { name: /Seated Dumbbell Shoulder Press/ });
+  await expect(suggestion).toBeVisible();
+  await expect(suggestion).toContainText('Same movement');
+  // Already in this workout, so not suggested.
+  await expect(swapDialog.getByRole('button', { name: /Incline Dumbbell Press/ })).toHaveCount(0);
+  await page.waitForTimeout(400); // let the sheet finish sliding up
+  await snap(page, '03b-swap');
+  await suggestion.click();
+  await expect(page.getByText(/choose a default in Settings/)).toBeVisible();
   await page.getByRole('button', { name: 'Just this workout' }).click();
   await expect(page.getByText('Seated Dumbbell Shoulder Press')).toBeVisible();
 
@@ -139,6 +155,39 @@ test('full workout flow on an iPhone-sized screen', async ({ page }, info) => {
   await page.getByRole('button', { name: 'Pounds (lbs)' }).click();
   await page.getByRole('button', { name: 'Today' }).click();
   await expect(page.getByText(/^182\.4\s*lbs$/)).toBeVisible();
+
+  // Swap default "This workout": no question, saved plan unchanged.
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'This workout' }).click();
+  await expect(page.getByText(/Swaps only change the current workout/)).toBeVisible();
+  await snap(page, '11-settings-swap');
+  await page.getByRole('button', { name: 'Today' }).click();
+  await page.getByRole('button', { name: 'Start Legs A' }).click();
+  await page.getByText('Back Squat', { exact: true }).click();
+  await page.getByRole('button', { name: 'Swap exercise' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /Hack Squat/ }).click();
+  await expect(page.getByRole('button', { name: 'Just this workout' })).toHaveCount(0);
+  await expect(page.getByText('Hack Squat', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Discard Workout' }).click();
+  await page.getByRole('button', { name: 'Plans' }).click();
+  await page.getByText('Legs A').last().click();
+  await expect(page.getByText('Back Squat', { exact: true })).toBeVisible();
+  await page.getByText('‹ Plans').click();
+
+  // Swap default "Update plan": the saved plan changes too.
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Update plan' }).click();
+  await page.getByRole('button', { name: 'Today' }).click();
+  await page.getByRole('button', { name: 'Start Legs A' }).click();
+  await page.getByText('Romanian Deadlift', { exact: true }).click();
+  await page.getByRole('button', { name: 'Swap exercise' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /^Deadlift/ }).click();
+  await expect(page.getByText('Deadlift', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Discard Workout' }).click();
+  await page.getByRole('button', { name: 'Plans' }).click();
+  await page.getByText('Legs A').last().click();
+  await expect(page.getByText('Deadlift', { exact: true })).toBeVisible();
+  await expect(page.getByText('Romanian Deadlift', { exact: true })).toHaveCount(0);
 
   expect(errors).toEqual([]);
 });

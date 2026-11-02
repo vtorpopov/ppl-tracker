@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { db, type Settings, type Unit } from '../db/schema';
+import { db, type Settings, type SwapMode, type Unit } from '../db/schema';
 import { exportData, importData } from '../logic/backup';
 import { fmtClock } from '../format';
 import { Button, Card, NumInput, Page, Row, SectionTitle, Segmented } from '../components/ui';
@@ -81,6 +81,19 @@ export function SettingsScreen({ settings }: { settings: Settings }) {
             {[30, 45, 60, 75, 90, 120, 150, 180, 240, 300].map((s) => <option key={s} value={s}>{fmtClock(s)}</option>)}
           </select>
         </Row>
+        <div className="px-4 py-3 border-b border-sep/60">
+          <div className="mb-2">When swapping an exercise</div>
+          <Segmented<SwapMode> value={settings.swapMode ?? 'ask'} onChange={(m) => void update({ swapMode: m })} options={[
+            { value: 'ask', label: 'Ask me' }, { value: 'workout', label: 'This workout' }, { value: 'plan', label: 'Update plan' },
+          ]} />
+          <p className="text-label2 text-[13px] mt-1.5">
+            {{
+              ask: 'Each time, choose whether the swap is just for today or permanent.',
+              workout: 'Swaps only change the current workout. Your saved plans stay the same.',
+              plan: 'Swaps also replace the exercise in the saved plan (e.g. Push A) from now on.',
+            }[settings.swapMode ?? 'ask']}
+          </p>
+        </div>
         <Row>
           <span className="flex-1">Bar weight ({unit})</span>
           <NumInput value={isKg ? settings.barKg : settings.barLbs} onCommit={(v) => v != null && v >= 0 && void update(isKg ? { barKg: v } : { barLbs: v })} className="w-20" ariaLabel="Bar weight" />

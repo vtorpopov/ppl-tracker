@@ -88,7 +88,7 @@ export function Sheet({ open, title, onClose, children }: { open: boolean; title
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <div className="absolute inset-0 bg-black/60 anim-fade" onClick={onClose} />
-      <div className="relative bg-[#1c1c1e] rounded-t-3xl max-h-[88vh] flex flex-col anim-sheet pb-safe">
+      <div role="dialog" aria-modal="true" aria-label={title} className="relative bg-[#1c1c1e] rounded-t-3xl max-h-[88vh] flex flex-col anim-sheet pb-safe">
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-sep/60">
           <h3 className="text-[17px] font-semibold">{title}</h3>
           <button type="button" onClick={onClose} className="text-accent font-semibold px-1 py-1" aria-label="Close">Done</button>

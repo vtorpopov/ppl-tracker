@@ -6,7 +6,9 @@ import { calcPlates } from './plates';
 import { fromDisplay, fmtWeight, toDisplay, LBS_PER_KG } from './units';
 import { e1rm, lastSetsFor, progressFor } from './stats';
 import { exportData, importData } from './backup';
-import { PplDb, type SetEntry, type Session } from '../db/schema';
+import { PplDb, type Exercise, type SetEntry, type Session } from '../db/schema';
+import { similarExercises } from './similar';
+import { seedExercises } from '../db/seed';
 
 const rot = [1, 2, 3, 4, 5, 6];
 const set = (weight: number, reps: number, extra: Partial<SetEntry> = {}): SetEntry => ({
@@ -136,5 +138,46 @@ describe('backup', () => {
     expect((await b.sessions.toArray())[0].notes).toBe('hi');
     await expect(importData(b, { nope: true })).rejects.toThrow();
     expect(await b.sessions.count()).toBe(1);
+  });
+});
+
+describe('swap suggestions', () => {
+  const byName = (n: string) => seedExercises.find((e) => e.name === n)!;
+  const names = (target: string, opts = {}) => similarExercises(byName(target), seedExercises, opts).map((s) => s.exercise.name);
+
+  it('bench press → other horizontal presses first, never lateral raises', () => {
+    const list = names('Barbell Bench Press');
+    expect(list.slice(0, 3).sort()).toEqual(['Dumbbell Bench Press', 'Machine Chest Press', 'Push-Up']);
+    expect(list).not.toContain('Lateral Raise');
+    expect(list).not.toContain('Barbell Bench Press');
+  });
+  it('overhead press → seated dumbbell shoulder press first', () => {
+    expect(names('Overhead Press')[0]).toBe('Seated Dumbbell Shoulder Press');
+  });
+  it('pull-up → pulldown and chin-up', () => {
+    expect(names('Pull-Up').slice(0, 2).sort()).toEqual(['Chin-Up', 'Lat Pulldown']);
+  });
+  it('back squat → squat patterns first', () => {
+    expect(names('Back Squat').slice(0, 3).sort()).toEqual(['Front Squat', 'Hack Squat', 'Leg Press']);
+  });
+  it('cardio only suggests cardio', () => {
+    const list = similarExercises(byName('Treadmill'), seedExercises);
+    expect(list.length).toBeGreaterThan(0);
+    expect(list.every((s) => s.exercise.type === 'cardio')).toBe(true);
+  });
+  it('skips exercises already in the workout and labels the reason', () => {
+    const r = similarExercises(byName('Barbell Bench Press'), seedExercises, { exclude: [byName('Dumbbell Bench Press').id!] });
+    expect(r.map((s) => s.exercise.name)).not.toContain('Dumbbell Bench Press');
+    expect(r[0].reason).toBe('Same movement');
+  });
+  it('previously logged exercises win ties', () => {
+    const history = new Set([byName('Push-Up').id!]);
+    expect(names('Barbell Bench Press', { history })[0]).toBe('Push-Up');
+  });
+  it('custom exercises get suggestions by muscle group', () => {
+    const custom: Exercise = { id: 999, name: 'Landmine Press', muscle: 'Chest', equipment: 'Barbell', type: 'strength', region: 'upper' };
+    const list = similarExercises(custom, [...seedExercises, custom]);
+    expect(list.length).toBeGreaterThanOrEqual(3);
+    expect(list.every((s) => s.exercise.muscle === 'Chest')).toBe(true);
   });
 });

@@ -9,6 +9,7 @@ import { nextWeightHint } from '../logic/progression';
 import { fmtNumber, fmtWeight, fromDisplay, toDisplay } from '../logic/units';
 import { ExercisePicker } from '../components/ExercisePicker';
 import { PlateSheet } from '../components/PlateSheet';
+import { SwapSheet } from '../components/SwapSheet';
 import { RestTimer } from '../components/RestTimer';
 import { Button, NumInput, Sheet } from '../components/ui';
 
@@ -46,7 +47,8 @@ export function WorkoutScreen({ sessionId, settings, onClose }: { sessionId: num
   const allSessions = useLiveQuery(() => db.sessions.toArray(), []) ?? [];
   const exMap = useExerciseMap();
   const [rest, setRestState] = useState<Rest | null>(() => loadRest(sessionId));
-  const [picker, setPicker] = useState<{ mode: 'add' } | { mode: 'swap'; index: number } | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [swapIndex, setSwapIndex] = useState<number | null>(null);
   const [pendingSwap, setPendingSwap] = useState<{ index: number; ex: Exercise } | null>(null);
   const [menu, setMenu] = useState<number | null>(null);
   const [plates, setPlates] = useState<number | null>(null);
@@ -114,6 +116,19 @@ export function WorkoutScreen({ sessionId, settings, onClose }: { sessionId: num
     setPendingSwap(null);
   };
 
+  // Settings decide whether a swap is temporary, permanent, or asked each time.
+  const chooseSwap = (index: number, ex: Exercise) => {
+    const mode = settings.swapMode ?? 'ask';
+    if (session.templateId == null || mode === 'workout') void applySwap(index, ex, false);
+    else if (mode === 'plan') void applySwap(index, ex, true);
+    else setPendingSwap({ index, ex });
+  };
+
+  const logged = new Set(
+    allSessions.filter((s) => s.endedAt != null).flatMap((s) => s.exercises.filter((e) => e.sets.some((x) => x.done)).map((e) => e.exerciseId)),
+  );
+  const swapTarget = swapIndex != null && session.exercises[swapIndex] ? exMap.get(session.exercises[swapIndex].exerciseId) ?? null : null;
+
   const color = categoryColor[session.category];
   const menuEx = menu != null ? session.exercises[menu] : null;
   const plateEx = plates != null ? session.exercises[plates] : null;
@@ -158,7 +173,7 @@ export function WorkoutScreen({ sessionId, settings, onClose }: { sessionId: num
           );
         })}
 
-        <Button kind="secondary" className="w-full" onClick={() => setPicker({ mode: 'add' })}>+ Add Exercise</Button>
+        <Button kind="secondary" className="w-full" onClick={() => setAdding(true)}>+ Add Exercise</Button>
 
         <textarea
           value={session.notes}
@@ -176,18 +191,21 @@ export function WorkoutScreen({ sessionId, settings, onClose }: { sessionId: num
       )}
 
       <ExercisePicker
-        open={picker != null}
-        title={picker?.mode === 'swap' ? 'Swap Exercise' : 'Add Exercise'}
-        onClose={() => setPicker(null)}
+        open={adding}
+        title="Add Exercise"
+        onClose={() => setAdding(false)}
         onPick={(ex) => {
-          if (picker?.mode === 'swap') {
-            if (session.templateId != null) setPendingSwap({ index: picker.index, ex });
-            else void applySwap(picker.index, ex, false);
-          } else {
-            const isCardio = ex.type === 'cardio';
-            mutate((exs) => { exs.push(sessionExercise(ex, isCardio ? 1 : 3, isCardio ? 0 : 8, isCardio ? 0 : 12, isCardio ? 0 : settings.restSec)); });
-          }
+          const isCardio = ex.type === 'cardio';
+          mutate((exs) => { exs.push(sessionExercise(ex, isCardio ? 1 : 3, isCardio ? 0 : 8, isCardio ? 0 : 12, isCardio ? 0 : settings.restSec)); });
         }}
+      />
+
+      <SwapSheet
+        target={swapTarget}
+        exclude={session.exercises.map((e) => e.exerciseId)}
+        history={logged}
+        onClose={() => setSwapIndex(null)}
+        onPick={(ex) => { if (swapIndex != null) chooseSwap(swapIndex, ex); setSwapIndex(null); }}
       />
 
       <Sheet open={pendingSwap != null} title="Swap Exercise" onClose={() => setPendingSwap(null)}>
@@ -196,6 +214,7 @@ export function WorkoutScreen({ sessionId, settings, onClose }: { sessionId: num
             <p className="text-label2 text-[15px]">Use <b className="text-white">{pendingSwap.ex.name}</b> just today, or make it part of {session.name} from now on?</p>
             <Button className="w-full" onClick={() => applySwap(pendingSwap.index, pendingSwap.ex, false)}>Just this workout</Button>
             <Button kind="secondary" className="w-full" onClick={() => applySwap(pendingSwap.index, pendingSwap.ex, true)}>Also update {session.name}</Button>
+            <p className="text-label2 text-[13px] text-center pt-1">You can choose a default in Settings so this isn't asked.</p>
           </div>
         )}
       </Sheet>
@@ -206,7 +225,7 @@ export function WorkoutScreen({ sessionId, settings, onClose }: { sessionId: num
             {exMap.get(menuEx.exerciseId)?.type === 'strength' && (
               <Button kind="secondary" className="w-full" onClick={() => { setPlates(menu); setMenu(null); }}>Plate calculator</Button>
             )}
-            <Button kind="secondary" className="w-full" onClick={() => { setPicker({ mode: 'swap', index: menu }); setMenu(null); }}>Swap exercise</Button>
+            <Button kind="secondary" className="w-full" onClick={() => { setSwapIndex(menu); setMenu(null); }}>Swap exercise</Button>
             <div className="flex gap-2">
               <Button kind="secondary" className="flex-1" disabled={menu === 0} onClick={() => { mutate((exs) => { [exs[menu - 1], exs[menu]] = [exs[menu], exs[menu - 1]]; }); setMenu(null); }}>Move up</Button>
               <Button kind="secondary" className="flex-1" disabled={menu === session.exercises.length - 1} onClick={() => { mutate((exs) => { [exs[menu + 1], exs[menu]] = [exs[menu], exs[menu + 1]]; }); setMenu(null); }}>Move down</Button>

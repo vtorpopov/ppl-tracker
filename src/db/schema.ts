@@ -5,6 +5,7 @@ export type Category = 'push' | 'pull' | 'legs' | 'other';
 export type ExerciseType = 'strength' | 'bodyweight' | 'cardio';
 export type Region = 'upper' | 'lower' | 'core';
 export type Unit = 'lbs' | 'kg';
+export type SwapMode = 'ask' | 'workout' | 'plan';
 
 export interface Exercise {
   id?: number;
@@ -81,6 +82,8 @@ export interface Settings {
   rotation: number[];
   /** Index into `rotation` of the next workout. */
   nextIndex: number;
+  /** What a mid-workout swap does to the saved plan. Missing means 'ask'. */
+  swapMode?: SwapMode;
 }
 
 export class PplDb extends Dexie {

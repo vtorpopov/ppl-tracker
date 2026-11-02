@@ -196,4 +196,5 @@ export const defaultSettings: Settings = {
   platesKg: [25, 20, 15, 10, 5, 2.5, 1.25],
   rotation: [1, 2, 3, 4, 5, 6],
   nextIndex: 0,
+  swapMode: 'ask',
 };
