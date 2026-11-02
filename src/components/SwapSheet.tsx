@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Exercise } from '../db/schema';
 import { similarExercises, type SwapReason } from '../logic/similar';
 import { ExercisePicker } from './ExercisePicker';
+import { ExerciseGuide, GuideButton } from './ExerciseGuide';
 import { Chevron, Sheet } from './ui';
 
 const reasonStyle: Record<SwapReason, string> = {
@@ -17,6 +18,7 @@ export function SwapSheet({ target, exclude, history, onClose, onPick }: {
 }) {
   const all = useLiveQuery(() => db.exercises.toArray(), []) ?? [];
   const [browsing, setBrowsing] = useState(false);
+  const [guide, setGuide] = useState<Exercise | null>(null);
   const suggestions = target ? similarExercises(target, all, { exclude, history }) : [];
 
   const close = () => { setBrowsing(false); onClose(); };
@@ -29,21 +31,23 @@ export function SwapSheet({ target, exclude, history, onClose, onPick }: {
         {suggestions.length > 0 ? (
           <div className="bg-card2/50 rounded-2xl overflow-hidden">
             {suggestions.map(({ exercise, reason }) => (
-              <button
-                key={exercise.id}
-                type="button"
-                onClick={() => pick(exercise)}
-                className="w-full flex items-center gap-3 text-left px-4 py-3 border-b border-sep/60 last:border-b-0 active:bg-card2"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium leading-snug">{exercise.name}</div>
-                  <div className="text-label2 text-[13px]">
-                    {exercise.muscle} · {exercise.equipment}
-                    {history.has(exercise.id!) && ' · done before'}
+              <div key={exercise.id} className="flex items-center gap-2 pr-3 border-b border-sep/60 last:border-b-0">
+                <button
+                  type="button"
+                  onClick={() => pick(exercise)}
+                  className="flex-1 min-w-0 flex items-center gap-3 text-left pl-4 py-3 active:opacity-70"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium leading-snug">{exercise.name}</div>
+                    <div className="text-label2 text-[13px]">
+                      {exercise.muscle} · {exercise.equipment}
+                      {history.has(exercise.id!) && ' · done before'}
+                    </div>
                   </div>
-                </div>
-                <span className={`shrink-0 text-[11px] font-semibold rounded-full px-2 py-0.5 ${reasonStyle[reason]}`}>{reason}</span>
-              </button>
+                  <span className={`shrink-0 text-[11px] font-semibold rounded-full px-2 py-0.5 ${reasonStyle[reason]}`}>{reason}</span>
+                </button>
+                <GuideButton onClick={() => setGuide(exercise)} label={`How to do ${exercise.name}`} />
+              </div>
             ))}
           </div>
         ) : (
@@ -59,6 +63,7 @@ export function SwapSheet({ target, exclude, history, onClose, onPick }: {
         </button>
       </Sheet>
       <ExercisePicker open={target != null && browsing} title="All Exercises" onClose={close} onPick={pick} />
+      <ExerciseGuide exercise={guide} onClose={() => setGuide(null)} />
     </>
   );
 }

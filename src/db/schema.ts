@@ -2,7 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import { seedExercises, seedTemplates, defaultSettings } from './seed';
 
 export type Category = 'push' | 'pull' | 'legs' | 'other';
-export type ExerciseType = 'strength' | 'bodyweight' | 'cardio';
+export type ExerciseType = 'strength' | 'bodyweight' | 'cardio' | 'timed';
 export type Region = 'upper' | 'lower' | 'core';
 export type Unit = 'lbs' | 'kg';
 export type SwapMode = 'ask' | 'workout' | 'plan';
@@ -42,6 +42,8 @@ export interface SetEntry {
   minutes?: number;
   /** Cardio only, in miles. */
   distance?: number;
+  /** Timed exercises only (plank, carries, hangs). */
+  seconds?: number;
 }
 
 export interface SessionExercise {
@@ -102,12 +104,25 @@ export class PplDb extends Dexie {
       bodyWeight: '++id, date',
       settings: 'id',
     });
+    // v2 adds ~60 built-in exercises. Only exercises missing by name are
+    // inserted, without fixed ids, so custom exercises and history stay put.
+    this.version(2).stores({}).upgrade((tx) => addMissingBuiltIns(tx.table('exercises')));
     this.on('populate', (tx) => {
       tx.table('exercises').bulkAdd(seedExercises);
       tx.table('templates').bulkAdd(seedTemplates);
       tx.table('settings').add(defaultSettings);
     });
   }
+}
+
+/** Inserts built-in exercises whose names aren't already present. */
+export async function addMissingBuiltIns(table: Table<Exercise, number>): Promise<number> {
+  const have = new Set((await table.toArray()).map((e) => e.name.trim().toLowerCase()));
+  const missing = seedExercises
+    .filter((e) => !have.has(e.name.toLowerCase()))
+    .map(({ id: _id, ...rest }) => rest);
+  if (missing.length) await table.bulkAdd(missing);
+  return missing.length;
 }
 
 export const db = new PplDb();

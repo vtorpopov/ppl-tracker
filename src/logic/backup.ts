@@ -1,4 +1,4 @@
-import type { BodyWeight, Exercise, PplDb, Session, Settings, Template } from '../db/schema';
+import { addMissingBuiltIns, type BodyWeight, type Exercise, type PplDb, type Session, type Settings, type Template } from '../db/schema';
 
 export interface Backup {
   app: 'ppl-tracker';
@@ -45,5 +45,7 @@ export async function importData(db: PplDb, data: unknown): Promise<void> {
     await db.sessions.bulkAdd(data.sessions);
     await db.bodyWeight.bulkAdd(data.bodyWeight);
     await db.settings.bulkAdd(data.settings);
+    // Backups from older versions lack newer built-in exercises.
+    await addMissingBuiltIns(db.exercises);
   });
 }

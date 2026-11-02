@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Category, type Settings, type Template } from '../db/schema';
+import { db, type Category, type Exercise, type Settings, type Template } from '../db/schema';
+import { hasTutorial } from '../data/guide';
 import { useExerciseMap, useTemplates } from '../hooks';
+import { defaultTargets } from '../actions';
 import { categoryColor, categoryLabel, fmtClock } from '../format';
 import { ExercisePicker, NewExerciseForm } from '../components/ExercisePicker';
+import { ExerciseGuide, GuideButton } from '../components/ExerciseGuide';
 import { Button, Card, Chevron, NumInput, Page, Row, SectionTitle, Segmented, Sheet } from '../components/ui';
 
 type View = { kind: 'list' } | { kind: 'template'; id: number } | { kind: 'library' };
@@ -118,6 +121,7 @@ function TemplateEditor({ id, settings, onBack }: { id: number; settings: Settin
   const template = useLiveQuery(() => db.templates.get(id), [id]);
   const exMap = useExerciseMap();
   const [picking, setPicking] = useState(false);
+  const [guide, setGuide] = useState<Exercise | null>(null);
   if (!template) return null;
 
   const save = (patch: Partial<Template>) => db.templates.update(id, patch);
@@ -161,10 +165,12 @@ function TemplateEditor({ id, settings, onBack }: { id: number; settings: Settin
         {template.items.map((it, i) => {
           const ex = exMap.get(it.exerciseId);
           const cardio = ex?.type === 'cardio';
+          const timed = ex?.type === 'timed';
           return (
             <Card key={i} className="p-3">
               <div className="flex items-center gap-2">
                 <div className="flex-1 font-semibold truncate">{ex?.name ?? 'Unknown exercise'}</div>
+                {ex && <GuideButton onClick={() => setGuide(ex)} label={`How to do ${ex.name}`} />}
                 <button type="button" disabled={i === 0} onClick={() => moveItem(i, -1)} className="w-8 h-8 rounded-lg bg-card2 disabled:opacity-30" aria-label="Move up">↑</button>
                 <button type="button" disabled={i === template.items.length - 1} onClick={() => moveItem(i, 1)} className="w-8 h-8 rounded-lg bg-card2 disabled:opacity-30" aria-label="Move down">↓</button>
                 <button type="button" onClick={() => void save({ items: template.items.filter((_, j) => j !== i) })} className="w-8 h-8 rounded-lg bg-card2 text-[#ff453a]" aria-label="Remove">✕</button>
@@ -174,10 +180,10 @@ function TemplateEditor({ id, settings, onBack }: { id: number; settings: Settin
                   <label className="text-label2 text-[11px] font-semibold uppercase">Sets
                     <NumInput value={it.sets} step="1" onCommit={(v) => v != null && v >= 1 && setItem(i, { sets: Math.round(v) })} className="w-full mt-1 text-white text-[16px]" />
                   </label>
-                  <label className="text-label2 text-[11px] font-semibold uppercase">Min reps
+                  <label className="text-label2 text-[11px] font-semibold uppercase">{timed ? 'Min sec' : 'Min reps'}
                     <NumInput value={it.repMin} step="1" onCommit={(v) => v != null && setItem(i, { repMin: Math.round(v) })} className="w-full mt-1 text-white text-[16px]" />
                   </label>
-                  <label className="text-label2 text-[11px] font-semibold uppercase">Max reps
+                  <label className="text-label2 text-[11px] font-semibold uppercase">{timed ? 'Max sec' : 'Max reps'}
                     <NumInput value={it.repMax} step="1" onCommit={(v) => v != null && setItem(i, { repMax: Math.round(v) })} className="w-full mt-1 text-white text-[16px]" />
                   </label>
                   <label className="text-label2 text-[11px] font-semibold uppercase">Rest
@@ -198,12 +204,13 @@ function TemplateEditor({ id, settings, onBack }: { id: number; settings: Settin
       </p>
       <Button kind="danger" className="w-full mt-6" onClick={remove}>Delete Workout</Button>
 
+      <ExerciseGuide exercise={guide} onClose={() => setGuide(null)} />
       <ExercisePicker
         open={picking}
         onClose={() => setPicking(false)}
         onPick={(ex) => {
-          const cardio = ex.type === 'cardio';
-          void save({ items: [...template.items, { exerciseId: ex.id!, sets: cardio ? 1 : 3, repMin: cardio ? 0 : 8, repMax: cardio ? 0 : 12, restSec: settings.restSec }] });
+          const [sets, repMin, repMax, restSec] = defaultTargets(ex, settings.restSec);
+          void save({ items: [...template.items, { exerciseId: ex.id!, sets, repMin, repMax, restSec }] });
         }}
       />
     </div>
@@ -214,6 +221,7 @@ function Library({ onBack }: { onBack: () => void }) {
   const all = useLiveQuery(() => db.exercises.orderBy('name').toArray(), []) ?? [];
   const [q, setQ] = useState('');
   const [creating, setCreating] = useState(false);
+  const [guide, setGuide] = useState<Exercise | null>(null);
   const filtered = useMemo(() => all.filter((e) => e.name.toLowerCase().includes(q.trim().toLowerCase())), [all, q]);
   const byMuscle = new Map<string, typeof all>();
   for (const e of filtered) byMuscle.set(e.muscle, [...(byMuscle.get(e.muscle) ?? []), e]);
@@ -232,16 +240,21 @@ function Library({ onBack }: { onBack: () => void }) {
           <div className="text-label2 text-[13px] font-semibold uppercase px-1 mb-1.5">{muscle}</div>
           <Card className="overflow-hidden">
             {list.map((e) => (
-              <Row key={e.id}>
+              <Row key={e.id} onClick={() => setGuide(e)}>
                 <div className="flex-1">
                   <div className="font-medium">{e.name}</div>
-                  <div className="text-label2 text-[13px]">{e.equipment}{e.type === 'bodyweight' ? ' · bodyweight' : ''}</div>
+                  <div className="text-label2 text-[13px]">
+                    {e.equipment}{e.type === 'bodyweight' ? ' · bodyweight' : e.type === 'timed' ? ' · timed' : ''}
+                  </div>
                 </div>
+                <span className="text-accent text-[13px] font-semibold">{hasTutorial(e.name) ? 'How to' : ''}</span>
+                <Chevron />
               </Row>
             ))}
           </Card>
         </div>
       ))}
+      <ExerciseGuide exercise={guide} onClose={() => setGuide(null)} />
       <Sheet open={creating} title="New Exercise" onClose={() => setCreating(false)}>
         <NewExerciseForm initialName={q} onCancel={() => setCreating(false)} onCreated={() => setCreating(false)} />
       </Sheet>

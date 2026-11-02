@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Exercise, type Session, type SessionExercise, type SetEntry, type Settings } from '../db/schema';
-import { blankSet, finishWorkout, saveSession, sessionExercise } from '../actions';
+import { blankSet, defaultTargets, finishWorkout, saveSession, sessionExercise } from '../actions';
 import { useExerciseMap } from '../hooks';
 import { categoryColor, fmtClock, fmtDate } from '../format';
 import { lastSetsFor } from '../logic/stats';
@@ -10,6 +10,7 @@ import { fmtNumber, fmtWeight, fromDisplay, toDisplay } from '../logic/units';
 import { ExercisePicker } from '../components/ExercisePicker';
 import { PlateSheet } from '../components/PlateSheet';
 import { SwapSheet } from '../components/SwapSheet';
+import { ExerciseGuide, GuideButton } from '../components/ExerciseGuide';
 import { RestTimer } from '../components/RestTimer';
 import { Button, NumInput, Sheet } from '../components/ui';
 
@@ -49,6 +50,7 @@ export function WorkoutScreen({ sessionId, settings, onClose }: { sessionId: num
   const [rest, setRestState] = useState<Rest | null>(() => loadRest(sessionId));
   const [adding, setAdding] = useState(false);
   const [swapIndex, setSwapIndex] = useState<number | null>(null);
+  const [guideEx, setGuideEx] = useState<Exercise | null>(null);
   const [pendingSwap, setPendingSwap] = useState<{ index: number; ex: Exercise } | null>(null);
   const [menu, setMenu] = useState<number | null>(null);
   const [plates, setPlates] = useState<number | null>(null);
@@ -167,6 +169,7 @@ export function WorkoutScreen({ sessionId, settings, onClose }: { sessionId: num
               live={live}
               last={lastSetsFor(allSessions, se.exerciseId, sessionId)}
               onMenu={() => setMenu(i)}
+              onGuide={() => setGuideEx(ex)}
               onUpdate={(f) => mutate((exs) => { exs[i] = f(exs[i]); })}
               onRest={(sec) => live && sec > 0 && setRest({ endsAt: Date.now() + sec * 1000, total: sec })}
             />
@@ -195,8 +198,7 @@ export function WorkoutScreen({ sessionId, settings, onClose }: { sessionId: num
         title="Add Exercise"
         onClose={() => setAdding(false)}
         onPick={(ex) => {
-          const isCardio = ex.type === 'cardio';
-          mutate((exs) => { exs.push(sessionExercise(ex, isCardio ? 1 : 3, isCardio ? 0 : 8, isCardio ? 0 : 12, isCardio ? 0 : settings.restSec)); });
+          mutate((exs) => { exs.push(sessionExercise(ex, ...defaultTargets(ex, settings.restSec))); });
         }}
       />
 
@@ -222,6 +224,7 @@ export function WorkoutScreen({ sessionId, settings, onClose }: { sessionId: num
       <Sheet open={menuEx != null} title={menuEx ? exMap.get(menuEx.exerciseId)?.name ?? '' : ''} onClose={() => setMenu(null)}>
         {menu != null && menuEx && (
           <div className="space-y-2">
+            <Button kind="secondary" className="w-full" onClick={() => { setGuideEx(exMap.get(menuEx.exerciseId) ?? null); setMenu(null); }}>How to do it</Button>
             {exMap.get(menuEx.exerciseId)?.type === 'strength' && (
               <Button kind="secondary" className="w-full" onClick={() => { setPlates(menu); setMenu(null); }}>Plate calculator</Button>
             )}
@@ -244,6 +247,8 @@ export function WorkoutScreen({ sessionId, settings, onClose }: { sessionId: num
         )}
       </Sheet>
 
+      <ExerciseGuide exercise={guideEx} onClose={() => setGuideEx(null)} />
+
       <PlateSheet
         open={plateEx != null}
         onClose={() => setPlates(null)}
@@ -260,14 +265,16 @@ function nextWeightHintFor(se: SessionExercise, exMap: Map<number, Exercise>, se
   return nextWeightHint(lastSetsFor(sessions, se.exerciseId, sessionId), se.repMax, ex.region, unit)?.weight ?? 0;
 }
 
-function ExerciseCard({ ex, se, unit, live, last, onMenu, onUpdate, onRest }: {
+function ExerciseCard({ ex, se, unit, live, last, onMenu, onGuide, onUpdate, onRest }: {
   ex: Exercise; se: SessionExercise; unit: Settings['unit']; live: boolean; last: SetEntry[];
-  onMenu: () => void; onUpdate: (f: (se: SessionExercise) => SessionExercise) => void; onRest: (sec: number) => void;
+  onMenu: () => void; onGuide: () => void; onUpdate: (f: (se: SessionExercise) => SessionExercise) => void; onRest: (sec: number) => void;
 }) {
   const cardio = ex.type === 'cardio';
   const bodyweight = ex.type === 'bodyweight';
+  const timed = ex.type === 'timed';
   const lastWorking = last.filter((s) => !s.warmup);
-  const hint = cardio ? null : nextWeightHint(last, se.repMax, ex.region, unit);
+  const hint = cardio || timed ? null : nextWeightHint(last, se.repMax, ex.region, unit);
+  const cols = cardio || timed ? 'grid-cols-[2.5rem_1fr_1fr_2.75rem]' : 'grid-cols-[2.5rem_1fr_1fr_4.25rem_2.75rem]';
 
   const update = (i: number, patch: Partial<SetEntry>) =>
     onUpdate((cur) => ({ ...cur, sets: cur.sets.map((s, j) => (j === i ? { ...s, ...patch } : s)) }));
@@ -275,14 +282,15 @@ function ExerciseCard({ ex, se, unit, live, last, onMenu, onUpdate, onRest }: {
   // Suggested values shown as grey placeholders; checking a set off accepts them.
   const suggest = (i: number) => {
     const s = se.sets[i];
-    if (s.warmup) return { weight: undefined, reps: undefined };
+    if (s.warmup) return { weight: undefined, reps: undefined, seconds: undefined };
     const wi = se.sets.slice(0, i).filter((x) => !x.warmup).length;
     const prev = lastWorking[wi] ?? lastWorking[lastWorking.length - 1];
     // Follow the weight already used today; otherwise the hint or last time's weight.
     const today = se.sets.slice(0, i).filter((x) => !x.warmup && x.weight > 0).pop();
     const weight = today?.weight ?? hint?.weight ?? prev?.weight;
     const reps = hint?.kind === 'increase' ? se.repMin || undefined : prev?.reps ?? (se.repMax || undefined);
-    return { weight, reps };
+    const seconds = prev?.seconds ?? (se.repMax || undefined);
+    return { weight, reps, seconds };
   };
 
   const toggle = (i: number) => {
@@ -290,7 +298,10 @@ function ExerciseCard({ ex, se, unit, live, last, onMenu, onUpdate, onRest }: {
     if (s.done) { update(i, { done: false }); return; }
     const sug = suggest(i);
     const patch: Partial<SetEntry> = { done: true };
-    if (!cardio) {
+    if (timed) {
+      if (!s.weight && sug.weight) patch.weight = sug.weight;
+      if (!s.seconds && sug.seconds) patch.seconds = sug.seconds;
+    } else if (!cardio) {
       if (!s.weight && sug.weight) patch.weight = sug.weight;
       if (!s.reps && sug.reps) patch.reps = sug.reps;
     }
@@ -298,22 +309,26 @@ function ExerciseCard({ ex, se, unit, live, last, onMenu, onUpdate, onRest }: {
     if (!cardio) onRest(s.warmup ? Math.min(60, se.restSec) : se.restSec);
   };
 
-  const target = cardio ? 'Cardio' : se.repMax ? `${se.sets.filter((s) => !s.warmup).length} × ${se.repMin === se.repMax ? se.repMax : `${se.repMin}–${se.repMax}`}` : '';
+  const range = se.repMin === se.repMax ? `${se.repMax}` : `${se.repMin}–${se.repMax}`;
+  const target = cardio ? 'Cardio' : se.repMax ? `${se.sets.filter((s) => !s.warmup).length} × ${range}${timed ? 's' : ''}` : '';
   const lastText = cardio
     ? last.map((s) => `${s.minutes ?? 0} min${s.distance ? ` · ${s.distance} mi` : ''}`).join(', ')
-    : lastWorking.map((s) => `${bodyweight && !s.weight ? 'BW' : fmtWeight(s.weight, unit)}×${s.reps}`).join(', ');
+    : timed
+      ? lastWorking.map((s) => `${s.weight ? `${fmtWeight(s.weight, unit)} ${unit} · ` : ''}${s.seconds ?? 0}s`).join(', ')
+      : lastWorking.map((s) => `${bodyweight && !s.weight ? 'BW' : fmtWeight(s.weight, unit)}×${s.reps}`).join(', ');
 
   return (
     <div className="bg-card rounded-2xl overflow-hidden">
-      <button type="button" onClick={onMenu} className="w-full text-left px-4 pt-3.5 pb-2 flex items-start gap-2 active:opacity-70">
-        <div className="flex-1 min-w-0">
+      <div className="px-4 pt-3.5 pb-2 flex items-start gap-2">
+        <button type="button" onClick={onMenu} className="flex-1 min-w-0 text-left active:opacity-70">
           <div className="text-[17px] font-semibold text-accent truncate">{ex.name}</div>
           <div className="text-label2 text-[13px]">
             {target}{target && !cardio && ` · rest ${fmtClock(se.restSec)}`}
           </div>
-        </div>
-        <span className="text-label2 text-[22px] leading-none mt-0.5" aria-label="Exercise options">⋯</span>
-      </button>
+        </button>
+        <GuideButton onClick={onGuide} label={`How to do ${ex.name}`} />
+        <button type="button" onClick={onMenu} className="shrink-0 w-8 h-8 text-label2 text-[22px] leading-none" aria-label="Exercise options">⋯</button>
+      </div>
 
       {(lastText || hint) && (
         <div className="px-4 pb-2 flex flex-wrap gap-x-3 gap-y-1 text-[13px]">
@@ -327,9 +342,11 @@ function ExerciseCard({ ex, se, unit, live, last, onMenu, onUpdate, onRest }: {
       )}
 
       <div className="px-2 pb-2">
-        <div className={`grid ${cardio ? 'grid-cols-[2.5rem_1fr_1fr_2.75rem]' : 'grid-cols-[2.5rem_1fr_1fr_4.25rem_2.75rem]'} gap-1.5 px-1 text-[11px] font-semibold text-label2 uppercase pb-1`}>
+        <div className={`grid ${cols} gap-1.5 px-1 text-[11px] font-semibold text-label2 uppercase pb-1`}>
           <div className="text-center">Set</div>
-          {cardio ? (<><div className="text-center">Min</div><div className="text-center">Miles</div></>) : (
+          {cardio ? (<><div className="text-center">Min</div><div className="text-center">Miles</div></>) : timed ? (
+            <><div className="text-center">+{unit}</div><div className="text-center">Sec</div></>
+          ) : (
             <><div className="text-center">{bodyweight ? `+${unit}` : unit}</div><div className="text-center">Reps</div><div className="text-center">RPE</div></>
           )}
           <div className="text-center">✓</div>
@@ -340,7 +357,7 @@ function ExerciseCard({ ex, se, unit, live, last, onMenu, onUpdate, onRest }: {
           return (
             <div
               key={i}
-              className={`grid ${cardio ? 'grid-cols-[2.5rem_1fr_1fr_2.75rem]' : 'grid-cols-[2.5rem_1fr_1fr_4.25rem_2.75rem]'} gap-1.5 items-center px-1 py-1 rounded-lg ${s.done ? 'bg-[#30d158]/15' : ''}`}
+              className={`grid ${cols} gap-1.5 items-center px-1 py-1 rounded-lg ${s.done ? 'bg-[#30d158]/15' : ''}`}
             >
               <button
                 type="button"
@@ -354,6 +371,22 @@ function ExerciseCard({ ex, se, unit, live, last, onMenu, onUpdate, onRest }: {
                 <>
                   <NumInput value={s.minutes ?? null} onCommit={(v) => update(i, { minutes: v ?? undefined })} placeholder="0" ariaLabel="Minutes" />
                   <NumInput value={s.distance ?? null} onCommit={(v) => update(i, { distance: v ?? undefined })} placeholder="0" ariaLabel="Miles" />
+                </>
+              ) : timed ? (
+                <>
+                  <NumInput
+                    value={s.weight ? Math.round(toDisplay(s.weight, unit) * 100) / 100 : null}
+                    onCommit={(v) => update(i, { weight: v == null ? 0 : fromDisplay(v, unit) })}
+                    placeholder={sug.weight ? fmtNumber(toDisplay(sug.weight, unit)) : '—'}
+                    ariaLabel="Added weight"
+                  />
+                  <NumInput
+                    value={s.seconds ?? null}
+                    onCommit={(v) => update(i, { seconds: v == null ? undefined : Math.round(v) })}
+                    placeholder={sug.seconds ? String(sug.seconds) : '—'}
+                    step="1"
+                    ariaLabel="Seconds"
+                  />
                 </>
               ) : (
                 <>

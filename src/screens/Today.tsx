@@ -62,7 +62,7 @@ export function TodayScreen({ settings, onOpenSession }: { settings: Settings; o
                   <li key={i} className="flex justify-between text-[15px]">
                     <span className="truncate pr-3">{ex?.name ?? '—'}</span>
                     <span className="text-label2 tabular shrink-0">
-                      {ex?.type === 'cardio' ? 'cardio' : `${it.sets} × ${it.repMin === it.repMax ? it.repMax : `${it.repMin}–${it.repMax}`}`}
+                      {ex?.type === 'cardio' ? 'cardio' : `${it.sets} × ${it.repMin === it.repMax ? it.repMax : `${it.repMin}–${it.repMax}`}${ex?.type === 'timed' ? 's' : ''}`}
                     </span>
                   </li>
                 );

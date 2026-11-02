@@ -6,8 +6,9 @@ export function e1rm(weight: number, reps: number): number {
   return reps === 1 ? weight : weight * (1 + reps / 30);
 }
 
+/** Completed, non-warm-up sets with reps (timed holds have none). */
 export function workingSets(sets: SetEntry[]): SetEntry[] {
-  return sets.filter((s) => s.done && !s.warmup);
+  return sets.filter((s) => s.done && !s.warmup && s.reps > 0);
 }
 
 /** Sets from the most recent finished session that did this exercise. */

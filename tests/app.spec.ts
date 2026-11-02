@@ -58,17 +58,47 @@ test('full workout flow on an iPhone-sized screen', async ({ page }, info) => {
   await page.getByText('Overhead Press', { exact: true }).click();
   await page.getByRole('button', { name: 'Swap exercise' }).click();
   const swapDialog = page.getByRole('dialog', { name: 'Swap Overhead Press' });
-  const suggestion = swapDialog.getByRole('button', { name: /Seated Dumbbell Shoulder Press/ });
+  const suggestion = swapDialog.getByRole('button', { name: /^Seated Dumbbell Shoulder Press/ });
   await expect(suggestion).toBeVisible();
   await expect(suggestion).toContainText('Same movement');
   // Already in this workout, so not suggested.
   await expect(swapDialog.getByRole('button', { name: /Incline Dumbbell Press/ })).toHaveCount(0);
   await page.waitForTimeout(400); // let the sheet finish sliding up
   await snap(page, '03b-swap');
+  // Preview a suggestion's guide before swapping.
+  await swapDialog.getByRole('button', { name: 'How to do Seated Dumbbell Shoulder Press' }).click();
+  const previewGuide = page.getByRole('dialog', { name: 'Seated Dumbbell Shoulder Press' });
+  await expect(previewGuide.getByText('How to do it')).toBeVisible();
+  await previewGuide.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(previewGuide).toBeHidden();
   await suggestion.click();
   await expect(page.getByText(/choose a default in Settings/)).toBeVisible();
   await page.getByRole('button', { name: 'Just this workout' }).click();
   await expect(page.getByText('Seated Dumbbell Shoulder Press')).toBeVisible();
+
+  // Exercise guide from the workout card.
+  await page.getByRole('button', { name: 'How to do Barbell Bench Press' }).click();
+  const guide = page.getByRole('dialog', { name: 'Barbell Bench Press' });
+  for (const heading of ['Setup', 'How to do it', 'Form tips', 'Common mistakes']) {
+    await expect(guide.getByRole('heading', { name: heading })).toBeVisible();
+  }
+  await expect(guide.locator('iframe')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/rT7DgCr-3pg/);
+  await expect(guide.getByRole('link', { name: 'Open in YouTube' })).toHaveAttribute('href', /rT7DgCr-3pg/);
+  await page.waitForTimeout(400);
+  await snap(page, '12-guide');
+  await guide.getByRole('button', { name: 'Close', exact: true }).click();
+
+  // Timed exercise: Plank logs seconds.
+  await page.getByRole('button', { name: '+ Add Exercise' }).click();
+  await page.getByPlaceholder('Search exercises').fill('Plank');
+  await page.getByRole('dialog').getByRole('button', { name: /^Plank/ }).click();
+  const seconds = page.getByLabel('Seconds');
+  await expect(seconds.first()).toHaveAttribute('placeholder', '60');
+  await seconds.first().fill('45');
+  // Check off the same row we typed into.
+  await seconds.first().locator('xpath=..').getByRole('button', { name: 'Mark set done' }).click();
+  await expect(page.getByText('3 × 30–60s')).toBeVisible();
+  await snap(page, '13-plank');
 
   await page.getByPlaceholder(/Workout notes/).fill('Felt strong');
   await page.getByRole('button', { name: 'Finish' }).click();
@@ -78,7 +108,7 @@ test('full workout flow on an iPhone-sized screen', async ({ page }, info) => {
   await expect(page.getByRole('button', { name: 'Start Pull A' })).toBeVisible();
   await expect(page.getByText('Last workout')).toBeVisible();
   // Warm-up excluded: two working sets of 135 × 8.
-  await expect(page.getByText('Sets 2')).toBeVisible();
+  await expect(page.getByText('Sets 3')).toBeVisible(); // 2 bench + 1 plank
   await expect(page.getByText('Volume 2160 lbs')).toBeVisible();
 
   // Skip moves to Legs A.
@@ -103,7 +133,11 @@ test('full workout flow on an iPhone-sized screen', async ({ page }, info) => {
   expect(backup.sessions[0].exercises[0].sets[1].rpe).toBe(8);
   expect(backup.sessions[0].exercises[0].sets[2]).toMatchObject({ weight: 135, reps: 8, done: true });
   expect(backup.sessions[0].notes).toBe('Felt strong');
-  expect(backup.sessions[0].exercises.map((e: { exerciseId: number }) => e.exerciseId)).toEqual([1]);
+  const plankId = backup.exercises.find((e: { name: string }) => e.name === 'Plank').id;
+  expect(backup.sessions[0].exercises.map((e: { exerciseId: number }) => e.exerciseId)).toEqual([1, plankId]);
+  expect(backup.sessions[0].exercises[1].sets).toHaveLength(1); // unchecked sets dropped
+  expect(backup.sessions[0].exercises[1].sets[0]).toMatchObject({ seconds: 45, done: true });
+  expect(backup.exercises.length).toBe(115);
   const day = 86400000;
   const start = Date.now() - 56 * day;
   for (let w = 0; w < 8; w++) {
@@ -140,6 +174,12 @@ test('full workout flow on an iPhone-sized screen', async ({ page }, info) => {
   await page.getByRole('button', { name: 'Plans' }).click();
   await expect(page.getByText('Rotation')).toBeVisible();
   await snap(page, '08-plans');
+  await page.getByText('Exercise Library').click();
+  await page.getByPlaceholder('Search').fill('goblet');
+  await page.getByText('Goblet Squat').click();
+  await expect(page.getByRole('dialog', { name: 'Goblet Squat' }).getByText('Sit down between your heels', { exact: false })).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByText('‹ Plans').click();
   await page.getByText('Legs B').last().click();
   await expect(page.getByLabel('Workout name')).toHaveValue('Legs B');
   await snap(page, '09-template');
@@ -165,7 +205,7 @@ test('full workout flow on an iPhone-sized screen', async ({ page }, info) => {
   await page.getByRole('button', { name: 'Start Legs A' }).click();
   await page.getByText('Back Squat', { exact: true }).click();
   await page.getByRole('button', { name: 'Swap exercise' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: /Hack Squat/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /^Hack Squat/ }).click();
   await expect(page.getByRole('button', { name: 'Just this workout' })).toHaveCount(0);
   await expect(page.getByText('Hack Squat', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Discard Workout' }).click();

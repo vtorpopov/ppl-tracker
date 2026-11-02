@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Exercise, type ExerciseType, type Region } from '../db/schema';
 import { Button, Segmented, Sheet } from './ui';
 
-const muscles = ['Chest', 'Shoulders', 'Triceps', 'Back', 'Biceps', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Cardio', 'Other'];
+const muscles = ['Chest', 'Shoulders', 'Triceps', 'Back', 'Biceps', 'Traps', 'Forearms', 'Quads', 'Hamstrings', 'Glutes', 'Adductors', 'Calves', 'Core', 'Cardio', 'Other'];
 
 export function ExercisePicker({ open, title = 'Choose Exercise', onClose, onPick }: {
   open: boolean; title?: string; onClose: () => void; onPick: (ex: Exercise) => void;
@@ -106,7 +106,7 @@ export function NewExerciseForm({ initialName = '', onCancel, onCreated }: {
       <div>
         <span className="text-label2 text-[13px]">Tracking</span>
         <Segmented value={type} onChange={setType} options={[
-          { value: 'strength', label: 'Weight' }, { value: 'bodyweight', label: 'Bodyweight' }, { value: 'cardio', label: 'Cardio' },
+          { value: 'strength', label: 'Weight' }, { value: 'bodyweight', label: 'Body' }, { value: 'timed', label: 'Timed' }, { value: 'cardio', label: 'Cardio' },
         ]} />
       </div>
       <div>

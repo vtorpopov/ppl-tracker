@@ -5,6 +5,7 @@ type Pattern =
   | 'lateral-raise' | 'rear-delt' | 'triceps-ext' | 'curl'
   | 'vertical-pull' | 'horizontal-pull' | 'lat-pullover'
   | 'hip-hinge' | 'squat' | 'lunge' | 'knee-extension' | 'knee-flexion' | 'hip-thrust' | 'calf-raise'
+  | 'hip-abduction' | 'hip-adduction' | 'shrug' | 'grip' | 'core-rotation'
   | 'core' | 'cardio';
 
 interface Meta { pattern: Pattern; secondary: string[] }
@@ -70,7 +71,75 @@ const META: Record<string, Meta> = {
   'Hanging Leg Raise': { pattern: 'core', secondary: [] },
   'Cable Crunch': { pattern: 'core', secondary: [] },
   'Ab Wheel Rollout': { pattern: 'core', secondary: [] },
+
+  // Machines & cables
+  'Machine Shoulder Press': { pattern: 'vertical-press', secondary: ['Triceps'] },
+  'Incline Machine Press': { pattern: 'incline-press', secondary: ['Shoulders', 'Triceps'] },
+  'Smith Machine Bench Press': { pattern: 'horizontal-press', secondary: ['Triceps', 'Shoulders'] },
+  'Low-to-High Cable Fly': { pattern: 'chest-fly', secondary: ['Shoulders'] },
+  'Reverse Pec Deck': { pattern: 'rear-delt', secondary: ['Back'] },
+  'Machine Lateral Raise': { pattern: 'lateral-raise', secondary: [] },
+  'Machine Row': { pattern: 'horizontal-pull', secondary: ['Biceps', 'Shoulders'] },
+  'Bayesian Cable Curl': { pattern: 'curl', secondary: [] },
+  'Cable Triceps Kickback': { pattern: 'triceps-ext', secondary: [] },
+  'Pendulum Squat': { pattern: 'squat', secondary: ['Glutes'] },
+  'Smith Machine Squat': { pattern: 'squat', secondary: ['Glutes'] },
+  'Leg Press Calf Raise': { pattern: 'calf-raise', secondary: [] },
+  'Hip Abduction': { pattern: 'hip-abduction', secondary: [] },
+  'Hip Adduction': { pattern: 'hip-adduction', secondary: [] },
+  'Cable Glute Kickback': { pattern: 'hip-thrust', secondary: ['Hamstrings'] },
+  'Cable Pull-Through': { pattern: 'hip-hinge', secondary: ['Hamstrings'] },
+  'Back Extension': { pattern: 'hip-hinge', secondary: ['Glutes', 'Back'] },
+  'Cable Woodchopper': { pattern: 'core-rotation', secondary: ['Shoulders'] },
+  'Pallof Press': { pattern: 'core-rotation', secondary: [] },
+
+  // Dumbbell & home
+  'Dumbbell Curl': { pattern: 'curl', secondary: ['Forearms'] },
+  'Concentration Curl': { pattern: 'curl', secondary: [] },
+  'Arnold Press': { pattern: 'vertical-press', secondary: ['Triceps'] },
+  'Dumbbell Fly': { pattern: 'chest-fly', secondary: ['Shoulders'] },
+  'Dumbbell Floor Press': { pattern: 'horizontal-press', secondary: ['Triceps', 'Shoulders'] },
+  'Dumbbell Pullover': { pattern: 'lat-pullover', secondary: ['Chest', 'Triceps'] },
+  'Dumbbell Overhead Triceps Extension': { pattern: 'triceps-ext', secondary: [] },
+  'Dumbbell Triceps Kickback': { pattern: 'triceps-ext', secondary: [] },
+  'Goblet Squat': { pattern: 'squat', secondary: ['Glutes', 'Core'] },
+  'Dumbbell Romanian Deadlift': { pattern: 'hip-hinge', secondary: ['Glutes', 'Back'] },
+  'Walking Lunge': { pattern: 'lunge', secondary: ['Glutes'] },
+  'Reverse Lunge': { pattern: 'lunge', secondary: ['Glutes'] },
+  'Step-Up': { pattern: 'lunge', secondary: ['Glutes'] },
+  'Single-Leg Calf Raise': { pattern: 'calf-raise', secondary: [] },
+  'Kettlebell Swing': { pattern: 'hip-hinge', secondary: ['Hamstrings', 'Core'] },
+  'Barbell Shrug': { pattern: 'shrug', secondary: ['Forearms'] },
+  'Dumbbell Shrug': { pattern: 'shrug', secondary: ['Forearms'] },
+  'Wrist Curl': { pattern: 'grip', secondary: [] },
+  "Farmer's Carry": { pattern: 'grip', secondary: ['Traps', 'Core'] },
+
+  // Bodyweight
+  'Incline Push-Up': { pattern: 'horizontal-press', secondary: ['Triceps', 'Shoulders'] },
+  'Diamond Push-Up': { pattern: 'horizontal-press', secondary: ['Chest', 'Shoulders'] },
+  'Pike Push-Up': { pattern: 'vertical-press', secondary: ['Triceps'] },
+  'Bench Dip': { pattern: 'dip', secondary: ['Chest', 'Shoulders'] },
+  'Inverted Row': { pattern: 'horizontal-pull', secondary: ['Biceps', 'Shoulders'] },
+  'Negative Pull-Up': { pattern: 'vertical-pull', secondary: ['Biceps'] },
+  'Bodyweight Squat': { pattern: 'squat', secondary: ['Glutes'] },
+  'Glute Bridge': { pattern: 'hip-thrust', secondary: ['Hamstrings'] },
+  'Nordic Curl': { pattern: 'knee-flexion', secondary: [] },
+  'Hanging Knee Raise': { pattern: 'core', secondary: [] },
+
+  // Core
+  'Plank': { pattern: 'core', secondary: ['Shoulders'] },
+  'Side Plank': { pattern: 'core', secondary: [] },
+  'Hollow Body Hold': { pattern: 'core', secondary: [] },
+  'Dead Bug': { pattern: 'core', secondary: [] },
+  'Russian Twist': { pattern: 'core-rotation', secondary: [] },
+  'Bicycle Crunch': { pattern: 'core', secondary: [] },
+  'Dead Hang': { pattern: 'grip', secondary: ['Back'] },
 };
+
+/** Pattern and secondary muscles for a built-in exercise, if known. */
+export function exerciseMeta(name: string): { pattern: string; secondary: string[] } | undefined {
+  return META[name];
+}
 
 export type SwapReason = 'Same movement' | 'Same muscle' | 'Similar muscles';
 

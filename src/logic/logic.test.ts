@@ -4,11 +4,13 @@ import { afterComplete, afterSkip, nextTemplateId } from './rotation';
 import { nextWeightHint, increment } from './progression';
 import { calcPlates } from './plates';
 import { fromDisplay, fmtWeight, toDisplay, LBS_PER_KG } from './units';
-import { e1rm, lastSetsFor, progressFor } from './stats';
+import { e1rm, lastSetsFor, progressFor, sessionVolume } from './stats';
 import { exportData, importData } from './backup';
+import Dexie from 'dexie';
 import { PplDb, type Exercise, type SetEntry, type Session } from '../db/schema';
-import { similarExercises } from './similar';
-import { seedExercises } from '../db/seed';
+import { exerciseMeta, similarExercises } from './similar';
+import { tutorialFor } from '../data/guide';
+import { seedExercises, seedTemplates, defaultSettings } from '../db/seed';
 
 const rot = [1, 2, 3, 4, 5, 6];
 const set = (weight: number, reps: number, extra: Partial<SetEntry> = {}): SetEntry => ({
@@ -110,6 +112,11 @@ describe('stats', () => {
     expect(lastSetsFor(sessions, 1)[0].weight).toBe(110);
     expect(lastSetsFor(sessions, 1, 2)[0].weight).toBe(100);
   });
+  it('timed holds do not count toward volume or strength progress', () => {
+    const hold = { ...mk(9, 4, [{ weight: 25, reps: 0, seconds: 60, rpe: null, warmup: false, done: true }]) };
+    expect(sessionVolume(hold)).toBe(0);
+    expect(progressFor([hold], 1)).toEqual([]);
+  });
   it('progress excludes warm-ups and unfinished sessions', () => {
     const sessions = [mk(1, 2, [set(200, 3, { warmup: true }), set(100, 8)]), mk(2, 1, [set(90, 8)])];
     const p = progressFor(sessions, 1);
@@ -145,20 +152,39 @@ describe('swap suggestions', () => {
   const byName = (n: string) => seedExercises.find((e) => e.name === n)!;
   const names = (target: string, opts = {}) => similarExercises(byName(target), seedExercises, opts).map((s) => s.exercise.name);
 
-  it('bench press → other horizontal presses first, never lateral raises', () => {
+  const reasons = (target: string) => similarExercises(byName(target), seedExercises).map((s) => s.reason);
+
+  it('bench press → other chest presses first, never lateral raises', () => {
     const list = names('Barbell Bench Press');
-    expect(list.slice(0, 3).sort()).toEqual(['Dumbbell Bench Press', 'Machine Chest Press', 'Push-Up']);
+    expect(reasons('Barbell Bench Press').slice(0, 5)).toEqual(Array(5).fill('Same movement'));
+    expect(list).toContain('Dumbbell Bench Press');
+    expect(list).toContain('Machine Chest Press');
     expect(list).not.toContain('Lateral Raise');
     expect(list).not.toContain('Barbell Bench Press');
   });
-  it('overhead press → seated dumbbell shoulder press first', () => {
-    expect(names('Overhead Press')[0]).toBe('Seated Dumbbell Shoulder Press');
+  it('overhead press → at least 3 other overhead presses', () => {
+    const list = names('Overhead Press').slice(0, 4).sort();
+    expect(list).toEqual(['Arnold Press', 'Machine Shoulder Press', 'Pike Push-Up', 'Seated Dumbbell Shoulder Press']);
   });
   it('pull-up → pulldown and chin-up', () => {
     expect(names('Pull-Up').slice(0, 2).sort()).toEqual(['Chin-Up', 'Lat Pulldown']);
   });
   it('back squat → squat patterns first', () => {
-    expect(names('Back Squat').slice(0, 3).sort()).toEqual(['Front Squat', 'Hack Squat', 'Leg Press']);
+    const list = names('Back Squat');
+    expect(reasons('Back Squat')).toEqual(Array(6).fill('Same movement'));
+    expect(list).toContain('Hack Squat');
+    expect(list).toContain('Leg Press');
+  });
+  it('new exercises get good matches too', () => {
+    expect(reasons('Plank').slice(0, 3)).toEqual(Array(3).fill('Same movement'));
+    expect(names('Plank').every((n) => byName(n).muscle === 'Core')).toBe(true);
+    expect(names('Goblet Squat')).toContain('Back Squat');
+    expect(names('Inverted Row').slice(0, 3).every((n) => byName(n).muscle === 'Back')).toBe(true);
+    expect(names('Dumbbell Shrug')[0]).toBe('Barbell Shrug');
+  });
+  it('every built-in strength exercise has swap data', () => {
+    const missing = seedExercises.filter((e) => e.type !== 'cardio' && !exerciseMeta(e.name)).map((e) => e.name);
+    expect(missing).toEqual([]);
   });
   it('cardio only suggests cardio', () => {
     const list = similarExercises(byName('Treadmill'), seedExercises);
@@ -179,5 +205,70 @@ describe('swap suggestions', () => {
     const list = similarExercises(custom, [...seedExercises, custom]);
     expect(list.length).toBeGreaterThanOrEqual(3);
     expect(list.every((s) => s.exercise.muscle === 'Chest')).toBe(true);
+  });
+});
+
+describe('upgrade from the first version', () => {
+  it('adds the new built-in exercises without touching existing data', async () => {
+    // Recreate a phone that installed v1: the original 55 exercises, a custom
+    // exercise that took id 56, a finished workout, and the starter plans.
+    const v1 = new Dexie('upgrade-test');
+    v1.version(1).stores({
+      exercises: '++id, name', templates: '++id, category', sessions: '++id, startedAt, endedAt, templateId',
+      bodyWeight: '++id, date', settings: 'id',
+    });
+    await v1.open();
+    await v1.table('exercises').bulkAdd(seedExercises.slice(0, 55));
+    await v1.table('exercises').add({ id: 56, name: 'Landmine Press', muscle: 'Shoulders', equipment: 'Barbell', type: 'strength', region: 'upper' });
+    // A custom exercise that happens to share a new built-in's name.
+    await v1.table('exercises').add({ id: 57, name: 'plank', muscle: 'Core', equipment: 'Bodyweight', type: 'bodyweight', region: 'core' });
+    await v1.table('templates').bulkAdd(seedTemplates);
+    await v1.table('settings').add({ ...defaultSettings, nextIndex: 3 });
+    await v1.table('sessions').add({
+      templateId: 1, name: 'Push A', category: 'push', startedAt: 1, endedAt: 2, notes: 'old',
+      exercises: [{ exerciseId: 56, repMin: 8, repMax: 12, restSec: 90, sets: [set(65, 10)] }],
+    });
+    v1.close();
+
+    const db2 = new PplDb('upgrade-test');
+    await db2.open();
+    const all = await db2.exercises.toArray();
+    const names = all.map((e) => e.name.toLowerCase());
+    expect(new Set(names).size).toBe(names.length); // no duplicates
+    expect(all).toHaveLength(seedExercises.length + 1); // + Landmine Press; "plank" reused
+    expect(await db2.exercises.get(56)).toMatchObject({ name: 'Landmine Press' });
+    expect(await db2.exercises.get(57)).toMatchObject({ name: 'plank', type: 'bodyweight' });
+    expect(names).toContain('goblet squat');
+    expect((await db2.sessions.toArray())[0]).toMatchObject({ notes: 'old', exercises: [{ exerciseId: 56 }] });
+    expect(await db2.templates.count()).toBe(seedTemplates.length);
+    expect((await db2.settings.get('main'))!.nextIndex).toBe(3);
+    db2.close();
+  });
+
+  it('a fresh install gets every built-in exercise once', async () => {
+    const fresh = new PplDb('fresh-install');
+    await fresh.open();
+    expect(await fresh.exercises.count()).toBe(seedExercises.length);
+    fresh.close();
+  });
+});
+
+describe('tutorials', () => {
+  it('every built-in exercise has a complete written guide and a video', () => {
+    const problems: string[] = [];
+    for (const e of seedExercises) {
+      const { guide, video } = tutorialFor(e.name);
+      if (!guide) problems.push(`${e.name}: no guide`);
+      else {
+        for (const k of ['setup', 'steps', 'tips', 'mistakes'] as const) {
+          if (guide[k].length < 2 || guide[k].some((line) => line.trim().length < 3)) problems.push(`${e.name}: weak ${k}`);
+        }
+      }
+      if (!video || !/^[\w-]{11}$/.test(video.id)) problems.push(`${e.name}: bad video`);
+    }
+    expect(problems).toEqual([]);
+  });
+  it('custom exercises have no built-in tutorial', () => {
+    expect(tutorialFor('Landmine Press')).toEqual({ guide: undefined, video: undefined });
   });
 });

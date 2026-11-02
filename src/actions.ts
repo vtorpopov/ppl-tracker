@@ -17,6 +17,13 @@ export function sessionExercise(ex: Exercise, sets: number, repMin: number, repM
   };
 }
 
+/** Default [sets, repMin, repMax, restSec] when adding an exercise. Timed targets are seconds. */
+export function defaultTargets(ex: Exercise, restSec: number): [number, number, number, number] {
+  if (ex.type === 'cardio') return [1, 0, 0, 0];
+  if (ex.type === 'timed') return [3, 30, 60, 60];
+  return [3, 8, 12, restSec];
+}
+
 export async function activeSession(): Promise<Session | undefined> {
   return db.sessions.filter((s) => s.endedAt == null).first();
 }

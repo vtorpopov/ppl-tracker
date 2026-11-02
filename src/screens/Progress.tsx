@@ -81,7 +81,7 @@ export function ProgressScreen({ settings }: { settings: Settings }) {
     for (const s of sessions) {
       if (s.endedAt == null) continue;
       for (const e of s.exercises) {
-        if (e.sets.some((x) => x.done && !x.warmup && x.weight > 0)) counts.set(e.exerciseId, (counts.get(e.exerciseId) ?? 0) + 1);
+        if (e.sets.some((x) => x.done && !x.warmup && x.weight > 0 && x.reps > 0)) counts.set(e.exerciseId, (counts.get(e.exerciseId) ?? 0) + 1);
       }
     }
     return [...counts].sort((a, b) => b[1] - a[1]).map(([id, n]) => ({ id, n }));

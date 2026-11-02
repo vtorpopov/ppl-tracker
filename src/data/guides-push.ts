@@ -1,0 +1,217 @@
+import type { Guide } from './guide';
+
+/** Chest, shoulders and triceps. */
+export const PUSH_GUIDES: Record<string, Guide> = {
+  'Barbell Bench Press': {
+    setup: ['Lie on the bench with your eyes under the bar and feet flat on the floor.', 'Grip the bar a little wider than shoulder width, thumbs wrapped around.', 'Squeeze your shoulder blades back and down, and keep a small arch in your upper back.'],
+    steps: ['Unrack the bar and hold it straight over your shoulders with locked arms.', 'Breathe in, brace your stomach, and lower the bar to your lower chest.', 'Touch lightly — no bouncing — with elbows about 45° from your body.', 'Press the bar up and slightly back until your arms are straight again.'],
+    tips: ['Wrists stay stacked over elbows; do not let them bend back.', 'Push your feet into the floor for a stable base.', 'Use a spotter or safety arms when going heavy.'],
+    mistakes: ['Elbows flared straight out to the sides (hard on shoulders).', 'Bouncing the bar off your chest.', 'Hips lifting off the bench.'],
+  },
+  'Incline Barbell Bench Press': {
+    setup: ['Set the bench to 30–45°.', 'Sit back with feet flat and eyes under the bar.', 'Grip slightly wider than shoulder width and pull your shoulder blades back.'],
+    steps: ['Unrack and hold the bar over your shoulders.', 'Lower it under control to your upper chest, just below the collarbones.', 'Press straight up until your arms are straight.'],
+    tips: ['A lower incline (around 30°) keeps the focus on the upper chest.', 'Keep your chest lifted the whole set.'],
+    mistakes: ['Bench set too steep — it turns into a shoulder press.', 'Lowering the bar to mid-chest instead of the upper chest.', 'Head pushing forward off the bench.'],
+  },
+  'Dumbbell Bench Press': {
+    setup: ['Sit on a flat bench with the dumbbells on your thighs.', 'Lie back and use your knees to help bring the weights up over your chest.', 'Pull your shoulder blades back and plant your feet.'],
+    steps: ['Start with arms straight and dumbbells over your shoulders.', 'Lower the dumbbells to the sides of your chest, elbows about 45° from your body.', 'Stop when you feel a good chest stretch.', 'Press up and slightly together until your arms are straight.'],
+    tips: ['Dumbbells let each side work on its own — great for fixing imbalances.', 'Keep your forearms vertical under the weights.'],
+    mistakes: ['Dropping the dumbbells too low and losing shoulder position.', 'Clanging the dumbbells together at the top.', 'Letting the elbows flare wide.'],
+  },
+  'Incline Dumbbell Press': {
+    setup: ['Set the bench to about 30°.', 'Kick the dumbbells up from your thighs as you lie back.', 'Shoulder blades back, chest up, feet flat.'],
+    steps: ['Hold the dumbbells over your upper chest with arms straight.', 'Lower them to the sides of your upper chest.', 'Press back up in a slight arc until your arms are straight.'],
+    tips: ['Think "chest up" the whole time.', 'A slight inward turn of the palms can feel easier on the shoulders.'],
+    mistakes: ['Bench too steep (more shoulders than chest).', 'Short, partial reps.', 'Arching your lower back off the bench.'],
+  },
+  'Machine Chest Press': {
+    setup: ['Adjust the seat so the handles line up with your mid-chest.', 'Sit with your back flat against the pad and feet on the floor.', 'Grip the handles and pull your shoulder blades back.'],
+    steps: ['Press the handles forward until your arms are straight, without locking hard.', 'Slowly let them come back until you feel a chest stretch.', 'Repeat with a smooth, steady pace.'],
+    tips: ['Great for beginners and for safely pushing close to failure.', 'Keep your shoulders down, away from your ears.'],
+    mistakes: ['Seat too high or low (handles at your neck or stomach).', 'Back peeling off the pad.', 'Letting the weight stack slam between reps.'],
+  },
+  'Cable Fly': {
+    setup: ['Set both pulleys around shoulder height with single handles.', 'Step forward into a staggered stance with a slight forward lean.', 'Start with arms out to the sides, elbows slightly bent.'],
+    steps: ['Bring your hands together in a wide hugging arc in front of your chest.', 'Squeeze your chest for a moment.', 'Slowly open your arms back out until you feel a stretch.'],
+    tips: ['Keep the same small bend in your elbows the whole time.', 'Imagine hugging a big tree.'],
+    mistakes: ['Bending and straightening the elbows (turning it into a press).', 'Using too much weight and shrugging.', 'Letting the cables yank your arms back.'],
+  },
+  'Pec Deck': {
+    setup: ['Adjust the seat so the handles are at chest height.', 'Sit with your back against the pad.', 'Grip the handles with a slight bend in the elbows.'],
+    steps: ['Bring the handles together in front of your chest.', 'Squeeze for a second.', 'Return slowly until you feel a stretch across your chest.'],
+    tips: ['Keep your chest up and shoulders back against the pad.', 'Control the way back — that is half the work.'],
+    mistakes: ['Shoulders rolling forward at the end of each rep.', 'Going so far back that your shoulders hurt.', 'Jerking the weight.'],
+  },
+  'Dips': {
+    setup: ['Grip the parallel bars and jump or step up to straight arms.', 'Cross your feet behind you if you like.', 'Lean your torso slightly forward to work more chest.'],
+    steps: ['Bend your elbows and lower your body slowly.', 'Go down until your upper arms are about parallel to the floor.', 'Push back up until your arms are straight.'],
+    tips: ['Lean forward more for chest, stay upright for triceps.', 'Use a band or assisted machine if you cannot do full reps yet.', 'Warm up your shoulders first.'],
+    mistakes: ['Dropping too deep and straining the front of the shoulder.', 'Shrugging your shoulders up to your ears.', 'Swinging your legs for momentum.'],
+  },
+  'Push-Up': {
+    setup: ['Hands on the floor slightly wider than shoulders.', 'Legs straight, body in one line from head to heels.', 'Squeeze your glutes and brace your stomach.'],
+    steps: ['Lower your chest toward the floor, elbows about 45° from your body.', 'Stop just above the floor.', 'Push back up until your arms are straight.'],
+    tips: ['Too hard? Put your hands on a bench (incline push-up).', 'Too easy? Slow down or add a backpack with weight.'],
+    mistakes: ['Hips sagging or sticking up.', 'Elbows flared straight out.', 'Half reps that only bend the arms a little.'],
+  },
+  'Overhead Press': {
+    setup: ['Set the bar in a rack at upper-chest height.', 'Grip just outside shoulder width and step back with feet hip-width apart.', 'Bar rests on the front of your shoulders, elbows slightly in front of the bar.'],
+    steps: ['Squeeze your glutes and brace your stomach.', 'Press the bar straight up, moving your head back slightly so it clears your chin.', 'Once past your head, bring your head forward so the bar ends over the middle of your feet.', 'Lower under control to your shoulders.'],
+    tips: ['The bar should travel in a straight vertical line.', 'Squeezing your glutes stops your lower back from arching.'],
+    mistakes: ['Leaning way back and turning it into an incline press.', 'Pressing the bar out in front of your face.', 'Using your legs to bounce the bar up.'],
+  },
+  'Seated Dumbbell Shoulder Press': {
+    setup: ['Set a bench upright (or nearly upright).', 'Sit with your back against the pad and dumbbells on your thighs.', 'Kick them up to shoulder height, palms forward.'],
+    steps: ['Press the dumbbells up until your arms are straight overhead.', 'Lower slowly until the dumbbells are about ear height.', 'Repeat.'],
+    tips: ['Keep elbows under your wrists.', 'Press slightly inward so the dumbbells finish over your head, not out wide.'],
+    mistakes: ['Arching your lower back off the pad.', 'Stopping halfway down.', 'Banging the dumbbells together at the top.'],
+  },
+  'Lateral Raise': {
+    setup: ['Stand tall with a light dumbbell in each hand at your sides.', 'Slight bend in your elbows.', 'Lean forward just a little.'],
+    steps: ['Raise your arms out to the sides, leading with your elbows.', 'Stop at shoulder height.', 'Lower slowly back down.'],
+    tips: ['Use a light weight — this muscle is small.', 'Think "push the dumbbells out to the walls," not up.'],
+    mistakes: ['Swinging your body to throw the weights up.', 'Shrugging your shoulders toward your ears.', 'Lifting above shoulder height.'],
+  },
+  'Cable Lateral Raise': {
+    setup: ['Set a pulley at the lowest position with a single handle.', 'Stand side-on to the machine and grab the handle with the far hand.', 'Hold the machine with your free hand for balance.'],
+    steps: ['Raise your arm out to the side and up to shoulder height.', 'Pause briefly.', 'Lower slowly — let the cable pull your arm across your body a little.'],
+    tips: ['The cable keeps tension on the muscle even at the bottom.', 'Leaning slightly away from the machine adds more stretch.'],
+    mistakes: ['Jerking the handle up.', 'Shrugging.', 'Bending and straightening the elbow during the rep.'],
+  },
+  'Rear Delt Fly': {
+    setup: ['Hold light dumbbells and hinge forward at the hips until your chest is nearly parallel to the floor.', 'Keep a flat back and a soft bend in your knees.', 'Let the dumbbells hang under your chest, palms facing each other.'],
+    steps: ['Raise your arms out to the sides with a slight elbow bend.', 'Stop when your arms are level with your body.', 'Lower slowly.'],
+    tips: ['Lead with your pinkies and elbows.', 'Lie chest-down on an incline bench if your lower back gets tired.'],
+    mistakes: ['Squeezing the shoulder blades hard (turns it into a back exercise).', 'Using momentum.', 'Rounding your back.'],
+  },
+  'Face Pull': {
+    setup: ['Set a rope on a cable at upper-chest or face height.', 'Grip the rope with thumbs pointing back toward you.', 'Step back until your arms are straight and there is tension.'],
+    steps: ['Pull the rope toward your face, spreading your hands apart.', 'Finish with your hands beside your ears and elbows high.', 'Return slowly with control.'],
+    tips: ['Imagine showing off your biceps at the end ("double-biceps pose").', 'Great for shoulder health — use moderate weight.'],
+    mistakes: ['Leaning back to heave the weight.', 'Elbows dropping low (turns into a row).', 'Going too heavy.'],
+  },
+  'Triceps Pushdown': {
+    setup: ['Attach a bar or rope to a high pulley.', 'Stand close, grab it, and pin your elbows to your sides.', 'Lean forward slightly.'],
+    steps: ['Push the handle down until your arms are fully straight.', 'Squeeze the back of your arms.', 'Let it rise back up until your forearms are about parallel to the floor.'],
+    tips: ['Only your forearms move — upper arms stay still.', 'With a rope, spread the ends apart at the bottom.'],
+    mistakes: ['Elbows drifting forward and away from your sides.', 'Leaning your body weight onto the bar.', 'Letting the weight yank your hands up.'],
+  },
+  'Overhead Triceps Extension': {
+    setup: ['Attach a rope to a cable (low or high).', 'Turn away from the machine and bring the rope behind your head.', 'Step forward into a staggered stance, elbows pointing forward.'],
+    steps: ['Straighten your arms forward and up.', 'Squeeze at the top.', 'Bend your elbows to let the rope come back behind your head for a deep stretch.'],
+    tips: ['This works the long head of the triceps best because of the stretch.', 'Keep your elbows close to your head.'],
+    mistakes: ['Elbows flaring out wide.', 'Arching your lower back.', 'Short reps that skip the stretch.'],
+  },
+  'Skull Crusher': {
+    setup: ['Lie on a flat bench holding an EZ bar with a close grip.', 'Hold it straight up over your chest.', 'Tilt your arms back slightly toward your head.'],
+    steps: ['Bend only your elbows to lower the bar toward your forehead or just behind your head.', 'Stop just before it touches.', 'Straighten your arms back up.'],
+    tips: ['Lowering behind the head adds stretch and is often easier on elbows.', 'Start light and move slowly.'],
+    mistakes: ['Moving your upper arms (it becomes a pullover/press).', 'Elbows flaring wide.', 'Lowering fast near your face.'],
+  },
+  'Close-Grip Bench Press': {
+    setup: ['Set up like a normal bench press.', 'Grip the bar about shoulder width — not narrower.', 'Shoulder blades back, feet planted.'],
+    steps: ['Unrack and hold the bar over your shoulders.', 'Lower it to your lower chest, keeping elbows tucked close to your body.', 'Press back up until your arms are straight.'],
+    tips: ['Shoulder-width is close enough — narrower hurts the wrists.', 'Great for building triceps and lockout strength.'],
+    mistakes: ['Hands touching (too narrow).', 'Elbows flaring out.', 'Bouncing off the chest.'],
+  },
+
+  // ---- Added exercises ----
+  'Machine Shoulder Press': {
+    setup: ['Adjust the seat so the handles start at shoulder height.', 'Sit with your back flat against the pad.', 'Grip the handles, elbows under your wrists.'],
+    steps: ['Press the handles up until your arms are straight.', 'Lower slowly back to shoulder height.', 'Repeat.'],
+    tips: ['A safe way to push hard without a spotter.', 'Keep your ribs down and back on the pad.'],
+    mistakes: ['Seat too low so you start below the shoulders.', 'Arching your back to finish reps.', 'Letting the plates slam.'],
+  },
+  'Incline Machine Press': {
+    setup: ['Adjust the seat so the handles line up with your upper chest.', 'Sit back against the pad, feet flat.', 'Pull your shoulder blades back.'],
+    steps: ['Press the handles up and out until your arms are straight.', 'Return slowly until you feel an upper-chest stretch.', 'Repeat.'],
+    tips: ['Good upper-chest alternative when the incline bench is taken.', 'Keep your chest lifted.'],
+    mistakes: ['Shoulders rolling forward.', 'Partial reps.', 'Back lifting off the pad.'],
+  },
+  'Smith Machine Bench Press': {
+    setup: ['Place a flat bench under the Smith bar so it lines up with your lower chest.', 'Grip slightly wider than shoulder width.', 'Shoulder blades back, feet flat.'],
+    steps: ['Twist the bar to unhook it.', 'Lower it to your lower chest.', 'Press back up, then twist to re-hook when done.'],
+    tips: ['Set the safety stops just below chest level.', 'The fixed path makes it easier to train hard alone.'],
+    mistakes: ['Bench in the wrong spot so the bar lands on your neck or stomach.', 'Forgetting to re-hook the bar.', 'Bouncing off the chest.'],
+  },
+  'Low-to-High Cable Fly': {
+    setup: ['Set both pulleys low (around knee height) with single handles.', 'Step forward into a staggered stance.', 'Start with arms down and out to the sides, palms forward.'],
+    steps: ['Sweep your hands up and together to about chin height.', 'Squeeze your upper chest.', 'Lower slowly back down and out.'],
+    tips: ['This upward angle targets the upper chest.', 'Keep a soft, fixed bend in your elbows.'],
+    mistakes: ['Pulling with your shoulders and shrugging.', 'Bending your arms into a press.', 'Too much weight and no control.'],
+  },
+  'Reverse Pec Deck': {
+    setup: ['Sit facing the pad on a pec deck machine.', 'Set the handles so your arms start straight out in front at shoulder height.', 'Chest against the pad.'],
+    steps: ['Pull the handles out and back in a wide arc.', 'Stop when your arms line up with your body.', 'Return slowly.'],
+    tips: ['Think "push out to the sides," not "squeeze the shoulder blades."', 'Light-to-moderate weight works best.'],
+    mistakes: ['Shrugging.', 'Bending the elbows a lot.', 'Swinging the weight.'],
+  },
+  'Machine Lateral Raise': {
+    setup: ['Adjust the seat so your shoulders line up with the machine pivot.', 'Sit with arms at your sides against the pads.', 'Chest up, shoulders down.'],
+    steps: ['Raise your arms out to the sides by pushing into the pads.', 'Stop around shoulder height.', 'Lower slowly.'],
+    tips: ['Lead with your elbows.', 'Pause at the top for a better squeeze.'],
+    mistakes: ['Shrugging up toward your ears.', 'Leaning to one side.', 'Dropping the weight on the way down.'],
+  },
+  'Cable Triceps Kickback': {
+    setup: ['Set a pulley low with a single handle (or no handle).', 'Hinge forward with a flat back.', 'Pin your upper arm by your side, elbow bent about 90°.'],
+    steps: ['Straighten your arm back behind you.', 'Squeeze the back of your arm.', 'Bend the elbow back to 90° slowly.'],
+    tips: ['Cables keep tension at the start where dumbbells do not.', 'Keep your upper arm still and parallel to the floor.'],
+    mistakes: ['Swinging the upper arm.', 'Standing too upright.', 'Rushing the reps.'],
+  },
+  'Arnold Press': {
+    setup: ['Sit on an upright bench with dumbbells at shoulder height.', 'Palms face you, like the top of a curl.', 'Back flat against the pad.'],
+    steps: ['Press up while rotating your palms to face forward.', 'Finish with arms straight overhead.', 'Lower while rotating back so palms face you again.'],
+    tips: ['The rotation works the front and side of the shoulder.', 'Go lighter than your normal shoulder press.'],
+    mistakes: ['Rotating too early or too late.', 'Arching the lower back.', 'Short reps.'],
+  },
+  'Dumbbell Fly': {
+    setup: ['Lie on a flat bench with dumbbells pressed up over your chest.', 'Palms facing each other.', 'Soft bend in your elbows.'],
+    steps: ['Open your arms out to the sides in a wide arc.', 'Lower until you feel a chest stretch (around chest level).', 'Bring them back up in the same arc.'],
+    tips: ['Keep the elbow bend fixed — like hugging a barrel.', 'Use lighter weights than for pressing.'],
+    mistakes: ['Bending and straightening the arms (a press).', 'Going too deep and straining the shoulder.', 'Too heavy.'],
+  },
+  'Dumbbell Floor Press': {
+    setup: ['Sit on the floor with dumbbells on your thighs.', 'Lie back, knees bent, feet flat.', 'Bring the dumbbells up over your chest.'],
+    steps: ['Lower until your upper arms lightly touch the floor.', 'Pause briefly.', 'Press back up until your arms are straight.'],
+    tips: ['Great when you have no bench — and easy on the shoulders.', 'Elbows about 45° from your body.'],
+    mistakes: ['Bouncing your elbows off the floor.', 'Elbows flared straight out.', 'Wrists bent back.'],
+  },
+  'Dumbbell Overhead Triceps Extension': {
+    setup: ['Sit or stand tall holding one dumbbell with both hands.', 'Press it overhead, hands cupping the top plate.', 'Elbows point forward, close to your head.'],
+    steps: ['Bend your elbows to lower the dumbbell behind your head.', 'Go until you feel a good stretch.', 'Straighten your arms back up.'],
+    tips: ['Sit on a bench with back support to protect your lower back.', 'Move only at the elbows.'],
+    mistakes: ['Elbows flaring wide.', 'Arching your back.', 'Partial reps.'],
+  },
+  'Dumbbell Triceps Kickback': {
+    setup: ['Put one hand and knee on a bench, back flat.', 'Hold a dumbbell with your upper arm by your side, parallel to the floor.', 'Elbow bent about 90°.'],
+    steps: ['Straighten your arm back until it is fully extended.', 'Squeeze for a second.', 'Lower back to 90° slowly.'],
+    tips: ['Keep your upper arm completely still.', 'Light weight with a strong squeeze beats heavy swinging.'],
+    mistakes: ['Upper arm dropping toward the floor.', 'Swinging the dumbbell.', 'Rounded back.'],
+  },
+  'Incline Push-Up': {
+    setup: ['Place your hands on a bench, box, or sturdy table, slightly wider than shoulders.', 'Walk your feet back until your body is straight.', 'Brace your stomach and squeeze your glutes.'],
+    steps: ['Lower your chest to the edge of the surface.', 'Keep elbows about 45° from your body.', 'Push back up to straight arms.'],
+    tips: ['The higher your hands, the easier it is.', 'Lower the surface over time to work toward floor push-ups.'],
+    mistakes: ['Hips sagging.', 'Head dropping forward.', 'Using a surface that can slide.'],
+  },
+  'Diamond Push-Up': {
+    setup: ['Get in push-up position with hands together under your chest.', 'Touch thumbs and index fingers to make a diamond shape.', 'Body straight from head to heels.'],
+    steps: ['Lower your chest toward your hands, elbows staying close to your sides.', 'Stop just above your hands.', 'Push back up.'],
+    tips: ['Targets triceps much more than regular push-ups.', 'Too hard? Do them from your knees or on a bench.'],
+    mistakes: ['Elbows flaring out.', 'Hips sagging.', 'Partial range of motion.'],
+  },
+  'Pike Push-Up': {
+    setup: ['Start in a push-up position, then walk your feet in and lift your hips high.', 'Your body makes an upside-down V.', 'Hands slightly wider than shoulders.'],
+    steps: ['Bend your elbows and lower the top of your head toward the floor in front of your hands.', 'Stop just before your head touches.', 'Push back up.'],
+    tips: ['A bodyweight shoulder press — the higher your hips, the harder it is.', 'Elevate your feet on a box to progress.'],
+    mistakes: ['Hips dropping (turns into a regular push-up).', 'Elbows flaring straight out.', 'Lowering the face instead of the top of the head.'],
+  },
+  'Bench Dip': {
+    setup: ['Sit on the edge of a bench, hands beside your hips, fingers forward.', 'Slide your hips off the bench.', 'Legs bent (easier) or straight (harder).'],
+    steps: ['Bend your elbows to lower your hips toward the floor.', 'Stop when your upper arms are about parallel to the floor.', 'Push back up to straight arms.'],
+    tips: ['Keep your back close to the bench.', 'Stop higher if you feel it in the front of your shoulders.'],
+    mistakes: ['Going too deep.', 'Shrugging your shoulders.', 'Elbows flaring out wide.'],
+  },
+};
